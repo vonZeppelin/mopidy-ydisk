@@ -22,10 +22,10 @@ Or, if available, install the Debian/Ubuntu package from `apt.mopidy.com <http:/
 Configuration
 =============
 
-Before starting Mopidy you must acquire and add Yandex.Disk tokens to your Mopidy configuration file::
+Before starting Mopidy you should acquire and add Yandex.Disk tokens to your Mopidy configuration file::
 
     [ydisk]
-    tokens = <token_1>, ..., <token_n>
+    tokens = <token_1>,...,<token_n>
 
 
 To acquire a Yandex.Disk token use Mopidy commands::
@@ -37,14 +37,18 @@ To acquire a Yandex.Disk token use Mopidy commands::
 Audio metadata retrieval
 ------------------------
 
-Mopidy-YDisk extension can try to read and cache audio file metadata. This feature is **experimental** and disabled by default.
+Mopidy-YDisk extension can read and cache audio file metadata, i.e. tags.
 
-To enable audio files tag retrieval use the following parameter::
+This feature is disabled by default. To enable it, use the following parameter::
 
     [ydisk]
-    tags_retrieve_concurrency = 3
+    tagging_mode = 3
 
-where ``0`` value disables the feature and ``n > 0`` means ``n`` threads will be used to load metadata.
+where value ``0`` disables the feature and value ``0 < n <= 10`` means ``n`` threads will be used to load audio tags.
+
+To clear the tags cache, use the following Mopidy command::
+
+    mopidy ydisk clear
 
 
 Project resources
@@ -56,6 +60,12 @@ Project resources
 
 Changelog
 =========
+
+v0.2.0
+------
+
+- Improved audio tags retrieval.
+
 
 v0.1.0
 ------

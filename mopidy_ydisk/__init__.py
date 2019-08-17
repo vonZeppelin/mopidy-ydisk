@@ -5,12 +5,10 @@ import os
 from mopidy import config, ext
 from mopidy.httpclient import format_proxy, format_user_agent
 
-
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 
 
 class Extension(ext.Extension):
-
     dist_name = 'Mopidy-YDisk'
     ext_name = 'ydisk'
     version = __version__
@@ -21,7 +19,7 @@ class Extension(ext.Extension):
 
     def get_config_schema(self):
         schema = super(Extension, self).get_config_schema()
-        schema['tags_retrieve_concurrency'] = config.Integer(minimum=0)
+        schema['tagging_mode'] = config.Integer(minimum=0, maximum=10)
         schema['tokens'] = config.List(optional=True)
         return schema
 
