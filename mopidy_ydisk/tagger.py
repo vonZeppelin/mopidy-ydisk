@@ -9,7 +9,6 @@ from itertools import cycle
 from cachetools import cachedmethod
 from mopidy.audio.scan import Scanner
 from mopidy.audio.tags import convert_tags_to_track
-from mopidy.exceptions import ScannerError
 from six import PY2
 from six.moves import range
 from . import Extension, get_proxy
@@ -41,7 +40,7 @@ class Minion(pykka.ThreadingActor):
                     'file_uri': file_uri,
                     'track': track
                 })
-        except ScannerError as e:
+        except Exception as e:
             logger.debug('Couldn\'t get track info for file %s: %s', file_uri, e)
 
 

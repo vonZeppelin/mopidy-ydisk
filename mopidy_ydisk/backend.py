@@ -6,7 +6,7 @@ import pykka
 from cachetools import cachedmethod, TTLCache
 from furl import furl
 from mopidy import backend
-from mopidy.models import Ref, Track
+from mopidy.models import Ref, SearchResult, Track
 from six import iterkeys, itervalues
 from . import Extension, get_proxy, get_user_agent
 from .tagger import Tagger
@@ -67,6 +67,7 @@ class YDiskLibrary(backend.LibraryProvider):
             )
 
         self._browse_cache = TTLCache(maxsize=1000, ttl=30 * 60)
+        self._list_files_cache = TTLCache(maxsize=50, ttl=5 * 60)
         self._init = init
         if ext_config['tagging_mode'] > 0:
             self._tagger = Tagger.start(config).proxy()
@@ -80,8 +81,9 @@ class YDiskLibrary(backend.LibraryProvider):
         if self._tagger:
             self._tagger.stop()
         self._browse_cache.clear()
+        self._list_files_cache.clear()
 
-    @cachedmethod(cache=lambda self: self._browse_cache, key=lambda uri: uri)
+    @cachedmethod(cache=lambda self: self._browse_cache)
     def browse(self, uri):
         if uri == ROOT_URI:
             return [
@@ -109,6 +111,39 @@ class YDiskLibrary(backend.LibraryProvider):
 
     def get_images(self, uris):
         return {}
+
+    def search(self, query=None, uris=None, exact=False):
+        def match(subvalue, value):
+            if exact:
+                return subvalue == value
+            else:
+                return subvalue.lower() in value.lower()
+
+        any_query = query.get('any')
+        track_name_query = query.get('track_name') or any_query or ()
+
+        # if not uris:
+        #     pass
+        # else:
+        tracks = []
+        for ydisk in itervalues(self.disks):
+            files = self._list_files(ydisk)
+            for f in files:
+                if any(match(track_name, f.name) for track_name in track_name_query):
+                    track_uri = (furl(ROOT_URI) / ydisk.id / f.path).url
+                    track = Track(uri=track_uri, name=f.name)
+                    # if self._tagger:
+                    #     track_f = self._tagger.get_track(track_uri)
+                    #     track = track_f.get() or track
+                    tracks.append(track)
+        return SearchResult(tracks=tracks)
+
+    @cachedmethod(
+        cache=lambda self: self._list_files_cache,
+        key=lambda ydisk: ydisk.id
+    )
+    def _list_files(self, ydisk):
+        return ydisk.list_files()
 
     @staticmethod
     def _make_ref(disk_id, resource):
